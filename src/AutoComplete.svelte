@@ -6,7 +6,7 @@
         return s.replace(/[-\\^$*+?.()|[\]{}]/g, "\\$&");
     }
 
-    //  Two elements - Input & Dropdown
+    //  Two elements - input & dropdown
     let input;
     let list;
 
@@ -15,13 +15,13 @@
     export let disabled = false;
 
     // autocomplete props
-    export let items= [];		//	Can be a list of strings, or a list of objects.....
-    export let key;					//	...	and the property to be displayed has this key
+    export let items= [];
+    export let key;
 
     // options
-    export let minChar= 2;			//	number of chars typed before we show dropdown
-    export let maxItems= 10;		//	to show in list
-    export let fromStart= true;	//	only check the first chars in the list, or any embedded string
+    export let minChar= 2;
+    export let maxItems= 10;
+    export let fromStart= true;
 
     let isOpen= false;
     let results= [];
@@ -39,14 +39,20 @@ function onChange (event) {
 }
 
 function filterResults () {
+    let cnt = 0;
     // console.log(search,key,items.length);
     results = items.filter((item,idx) => {
         if (typeof item !== 'string') {
-          item = item[key] || '';
+          item = item[key] || '';       // Silent fail
         }
-        return fromStart ? item.toUpperCase().startsWith(search.toUpperCase())
+        if (cnt >= maxItems) return false;
+        //console.log(item);
+        let match = fromStart ? item.toUpperCase().startsWith(search.toUpperCase())
                          : item.toUpperCase().includes(search.toUpperCase());
+        if (match) cnt++;
+        return match;
       });
+    //   console.log('mapping '+results.length);
       results = results.map(item => {
         const text = typeof item !== 'string' ? item[key] : item
         return {
@@ -56,19 +62,25 @@ function filterResults () {
                         text :
                         text.replace(RegExp(regExpEscape(search.trim()), 'i'), "<span>$&</span>")
         };
-      })
+      });
       //console.log(results);
-      const height = results.length > maxItems ? maxItems : results.length;
+      //const height = results.length > maxItems ? maxItems : results.length;
+      const height = results.length;
       list.style.height = `${height * 2.05}rem`;
+    //console.log('mapped '+results.length);
+    if (arrowCounter >= results.length) arrowCounter = results.length-1;
 }
 
 function     onKeyDown (event) {
-    // console.log('onKeyDown() '+event.keyCode);
-    if (event.keyCode === 40 && arrowCounter < results.length) {    // ArrowDown
-        arrowCounter++;
+    //console.log('onKeyDown() '+event.keyCode+'  "'+search+'"'+'  arrowCounter='+arrowCounter);
+    if (event.keyCode === 40) {    // ArrowDown
+        if (arrowCounter === -1) arrowCounter++;
+        else if (arrowCounter < results.length-1) arrowCounter++;
+        event.preventDefault();
     } else if (event.keyCode === 38 && arrowCounter > 0) {  // ArrowUp
         arrowCounter--;
-    } else if (event.keyCode === 13) {                      // Enter
+        event.preventDefault();
+   } else if (event.keyCode === 13) {                      // Enter
         event.preventDefault();
         if (arrowCounter === -1) {
             arrowCounter = 0;            // Default select first item of list
@@ -77,8 +89,8 @@ function     onKeyDown (event) {
     } else if (event.keyCode === 27) {      // Escape
         event.preventDefault();
         close();
-    } else if (search.length < 2) {     //  when they backspace to < 2 chars, close the dropdown
-        if (isOpen) isOpen= false;
+    } else if (search.length+1 < Number(minChar)) {     //  when they backspace to < minChars, close the dropdown
+        if (isOpen) {   isOpen= false;  arrowCounter=-1;    }
     }
 }
 
@@ -90,8 +102,6 @@ function     close (index = -1) {
         const { key, value } = results[index];
         dispatch('change', {value:value, key:key});
         search = key;
-      } else if (!value) {
-        search= '';
       }
     }
   
@@ -110,12 +120,11 @@ function     close (index = -1) {
     >
     <ul class="autocomplete-results{!isOpen ? ' hide-results' : ''}" bind:this={list}>
         {#each results as result, i}
-            {#if i < maxItems}
-                <li on:click={()=>close(i)}
-                    class="autocomplete-result { i === arrowCounter ? ' is-active' : '' }">
-                    {@html result.label}
-                </li>
-            {/if}
+            <li on:click={()=>close(i)}
+                on:mousemove={()=>arrowCounter=i}
+                class="autocomplete-result { i === arrowCounter ? ' is-active' : '' }">
+                {@html result.label}
+            </li>
         {/each}
     </ul>
   </div>
@@ -169,8 +178,9 @@ function     close (index = -1) {
     font-weight: bold;
   }
 
-  .autocomplete-result.is-active,
-  .autocomplete-result:hover {
+  .autocomplete-result.is-active
+  /* ,.autocomplete-result:hover  */
+  {
     background-color: #dbdbdb;
   }
 </style>
