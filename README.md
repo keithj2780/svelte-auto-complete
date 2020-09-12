@@ -2,8 +2,9 @@
 
 # Svelte auto-complete component
 
-This is a simple (100 lines of code) auto complete component for [Svelte](https://svelte.dev) apps.
-The demo REPL is at (https://svelte.dev/repl/b5bbb121a1bb4cf7815087ea9cd0c958?version=3.24.1).
+This is a simple (100 lines of code) auto complete component for [Svelte](https://svelte.dev) apps.  
+The demo REPL is at (https://svelte.dev/repl/b5bbb121a1bb4cf7815087ea9cd0c958?version=3.24.1).  
+It has no dependencies.  
 
 
 ## Get started
